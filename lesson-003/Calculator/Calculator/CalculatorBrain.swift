@@ -53,7 +53,8 @@ class CalculatorBrain {
     }
 
     func evaluate() -> Double? {
-        return evaluate(opStack).result
+        let (result, _) = evaluate(opStack)
+        return result
     }
     
     
