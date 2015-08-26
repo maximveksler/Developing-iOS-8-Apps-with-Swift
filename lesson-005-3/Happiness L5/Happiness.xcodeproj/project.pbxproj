@@ -159,6 +159,7 @@
 		EC0E935D1A7085B20077618F /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				LastSwiftUpdateCheck = 0700;
 				LastUpgradeCheck = 0610;
 				ORGANIZATIONNAME = "Stanford University";
 				TargetAttributes = {
@@ -411,6 +412,7 @@
 				EC0E93861A7085B20077618F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		EC0E93871A7085B20077618F /* Build configuration list for PBXNativeTarget "HappinessTests" */ = {
 			isa = XCConfigurationList;
@@ -419,6 +421,7 @@
 				EC0E93891A7085B20077618F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
