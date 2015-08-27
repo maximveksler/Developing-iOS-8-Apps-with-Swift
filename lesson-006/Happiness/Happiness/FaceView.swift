@@ -78,6 +78,12 @@ class FaceView: UIView {
     
     weak var dataSource: FaceViewDatasource?
     
+    func scale(geasure: UIPinchGestureRecognizer) {
+        if geasure.state == .Changed {
+            scale *= geasure.scale
+            geasure.scale = 1
+        }
+    }
     override func drawRect(rect: CGRect) {
         let facePath = UIBezierPath(arcCenter: faceCenter, radius: faceRadius, startAngle: 0, endAngle: CGFloat(2*M_PI), clockwise: true)
         
