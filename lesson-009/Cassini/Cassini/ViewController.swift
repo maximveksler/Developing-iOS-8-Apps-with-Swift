@@ -2,27 +2,35 @@
 //  ViewController.swift
 //  Cassini
 //
-//  Created by CS193p Instructor.
-//  Copyright (c) 2015 Stanford University. All rights reserved.
+//  Created by Maxim Veksler on 11/09/2015.
+//  Copyright © 2015 Stanford University. All rights reserved.
 //
 
 import UIKit
 
-class ViewController: UIViewController
-{
+indirect enum Tree<T> {
+    case Leaf(T)
+    case Branch(left: Tree<T>, right: Tree<T>)
+}
+
+indirect enum Tree2 {
+        case Leaf
+        case Branch(left: String, right: String)
+}
+
+class ViewController: UIViewController {
     override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
-        if let ivc = segue.destinationViewController as? ImageViewController {
+        if let svg = segue.destinationViewController as? ImageViewController {
             if let identifier = segue.identifier {
+                svg.title = identifier
+                
                 switch identifier {
                 case "Earth":
-                    ivc.imageURL = DemoURL.NASA.Earth
-                    ivc.title = "Earth"
-                case "Saturn":
-                    ivc.imageURL = DemoURL.NASA.Saturn
-                    ivc.title = "Saturn"
+                    svg.imageURL = DemoURL.NASA.Earth
                 case "Cassini":
-                    ivc.imageURL = DemoURL.NASA.Cassini
-                    ivc.title = "Cassini"
+                    svg.imageURL = DemoURL.NASA.Cassini
+                case "Saturn":
+                    svg.imageURL = DemoURL.NASA.Saturn
                 default: break
                 }
             }

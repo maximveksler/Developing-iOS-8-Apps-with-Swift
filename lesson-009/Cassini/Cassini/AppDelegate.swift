@@ -2,8 +2,8 @@
 //  AppDelegate.swift
 //  Cassini
 //
-//  Created by CS193p Instructor.
-//  Copyright (c) 2015 Stanford University. All rights reserved.
+//  Created by Maxim Veksler on 11/09/2015.
+//  Copyright © 2015 Stanford University. All rights reserved.
 //
 
 import UIKit
