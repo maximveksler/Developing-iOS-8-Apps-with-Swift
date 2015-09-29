@@ -2,8 +2,8 @@
 //  AppDelegate.swift
 //  Smashtag
 //
-//  Created by CS193p Instructor.
-//  Copyright (c) 2015 Stanford University. All rights reserved.
+//  Created by Maxim Veksler on 24/09/2015.
+//  Copyright © 2015 Stanford University. All rights reserved.
 //
 
 import UIKit

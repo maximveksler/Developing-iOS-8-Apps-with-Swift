@@ -16,16 +16,16 @@ import Foundation
 
 public class Tweet : CustomStringConvertible
 {
-    public let text: String
-    public let user: User
-    public let created: NSDate
+    public let text: String!
+    public let user: User!
+    public let created: NSDate!
     public let id: String?
-    public let media = [MediaItem]()
-    public let hashtags = [IndexedKeyword]()
-    public let urls = [IndexedKeyword]()
-    public let userMentions = [IndexedKeyword]()
+    public let media: [MediaItem]
+    public let hashtags: [IndexedKeyword]
+    public let urls: [IndexedKeyword]
+    public let userMentions: [IndexedKeyword]
 
-    public struct InCustomStringConvertibleord: CustomStringConvertible
+    public struct IndexedKeyword: CustomStringConvertible
     {
         public let keyword: String              // will include # or @ or http:// prefix
         public let range: Range<String.Index>   // index into the Tweet's text property only
@@ -35,20 +35,29 @@ public class Tweet : CustomStringConvertible
             let indices = data?.valueForKeyPath(TwitterKey.Entities.Indices) as? NSArray
             if let startIndex = (indices?.firstObject as? NSNumber)?.integerValue {
                 if let endIndex = (indices?.lastObject as? NSNumber)?.integerValue {
-                    let length = countElements(inText)
+                    let length = inText.characters.count
                     if length > 0 {
                         let start = max(min(startIndex, length-1), 0)
                         let end = max(min(endIndex, length), 0)
                         if end > start {
-                            range = advance(inText.startIndex, start)...advance(inText.startIndex, end-1)
-                            keyword = inText.substringWithRange(range)
-                            if prefix != nil && !keyword.hasPrefix(prefix!) && start > 0 {
-                                range = advance(inText.startIndex, start-1)...advance(inText.startIndex, end-2)
-                                keyword = inText.substringWithRange(range)
+                            var adjustedRange = inText.startIndex.advancedBy(start)...inText.startIndex.advancedBy(end-1)
+                            var keywordInText = inText.substringWithRange(adjustedRange)
+                            if prefix != nil && !keywordInText.hasPrefix(prefix!) && start > 0 {
+                                adjustedRange = inText.startIndex.advancedBy(start-1)...inText.startIndex.advancedBy(end-2)
+                                keywordInText = inText.substringWithRange(adjustedRange)
                             }
-                            if prefix == nil || keyword.hasPrefix(prefix!) {
+                            range = adjustedRange
+                            keyword = keywordInText
+                            if prefix == nil || keywordInText.hasPrefix(prefix!) {
                                 nsrange = inText.rangeOfString(keyword, nearRange: NSMakeRange(startIndex, endIndex-startIndex))
                                 if nsrange.location != NSNotFound {
+                                    // failable initializers are required to initialize all properties before returning failure
+                                    // (this is probably just a (temporary?) limitation of the implementation of Swift)
+                                    // however, it appears that (sometimes) you can "return" in the case of success like this
+                                    // and it avoids the warning (although "return" is sort of weird in an initializer)
+                                    // (this seems to work even though all the properties are NOT initialized for the "return nil" below)
+                                    // hopefully in future versions of Swift this will all not be an issue
+                                    // because you'll be allowed to fail without initializing all properties?
                                     return
                                 }
                             }
@@ -56,6 +65,8 @@ public class Tweet : CustomStringConvertible
                     }
                 }
             }
+            // it is possible we will get here without all properties being initialized
+            // hopefully that won't cause a problem even though the compiler does not complain? :)
             return nil
         }
 
@@ -67,41 +78,32 @@ public class Tweet : CustomStringConvertible
     // MARK: - Private Implementation
 
     init?(data: NSDictionary?) {
-        if let user = User(data: data?.valueForKeyPath(TwitterKey.User) as? NSDictionary) {
-            self.user = user
-            if let text = data?.valueForKeyPath(TwitterKey.Text) as? String {
-                self.text = text
-                if let created = (data?.valueForKeyPath(TwitterKey.Created) as? String)?.asTwitterDate {
-                    self.created = created
-                    id = data?.valueForKeyPath(TwitterKey.ID) as? String
-                    if let mediaEntities = data?.valueForKeyPath(TwitterKey.Media) as? NSArray {
-                        for mediaData in mediaEntities {
-                            if let mediaItem = MediaItem(data: mediaData as? NSDictionary) {
-                                media.append(mediaItem)
-                            }
-                        }
-                    }
-                    let hashtagMentionsArray = data?.valueForKeyPath(TwitterKey.Entities.Hashtags) as? NSArray
-                    hashtags = getIndexedKeywords(hashtagMentionsArray, inText: text, prefix: "#")
-                    let urlMentionsArray = data?.valueForKeyPath(TwitterKey.Entities.URLs) as? NSArray
-                    urls = getIndexedKeywords(urlMentionsArray, inText: text, prefix: "h")
-                    let userMentionsArray = data?.valueForKeyPath(TwitterKey.Entities.UserMentions) as? NSArray
-                    userMentions = getIndexedKeywords(userMentionsArray, inText: text, prefix: "@")
-                    return
+        user = User(data: data?.valueForKeyPath(TwitterKey.User) as? NSDictionary)
+        text = data?.valueForKeyPath(TwitterKey.Text) as? String
+        created = (data?.valueForKeyPath(TwitterKey.Created) as? String)?.asTwitterDate
+        id = data?.valueForKeyPath(TwitterKey.ID) as? String
+        var accumulatedMedia = [MediaItem]()
+        if let mediaEntities = data?.valueForKeyPath(TwitterKey.Media) as? NSArray {
+            for mediaData in mediaEntities {
+                if let mediaItem = MediaItem(data: mediaData as? NSDictionary) {
+                    accumulatedMedia.append(mediaItem)
                 }
             }
         }
-        // we've failed
-        // but compiler won't let us out of here with non-optional values unset
-        // so set them to anything just to able to return nil
-        // we could make these implicitly-unwrapped optionals, but they should never be nil, ever
-        self.text = ""
-        self.user = User()
-        self.created = NSDate()
-        return nil
+        media = accumulatedMedia
+        let hashtagMentionsArray = data?.valueForKeyPath(TwitterKey.Entities.Hashtags) as? NSArray
+        hashtags = Tweet.getIndexedKeywords(hashtagMentionsArray, inText: text, prefix: "#")
+        let urlMentionsArray = data?.valueForKeyPath(TwitterKey.Entities.URLs) as? NSArray
+        urls = Tweet.getIndexedKeywords(urlMentionsArray, inText: text, prefix: "h")
+        let userMentionsArray = data?.valueForKeyPath(TwitterKey.Entities.UserMentions) as? NSArray
+        userMentions = Tweet.getIndexedKeywords(userMentionsArray, inText: text, prefix: "@")
+        
+        if user == nil || text == nil || created == nil {
+            return nil
+        }
     }
 
-    private func getIndexedKeywords(dictionary: NSArray?, inText: String, prefix: String? = nil) -> [IndexedKeyword] {
+    private class func getIndexedKeywords(dictionary: NSArray?, inText: String, prefix: String? = nil) -> [IndexedKeyword] {
         var results = [IndexedKeyword]()
         if let indexedKeywords = dictionary {
             for indexedKeywordData in indexedKeywords {
@@ -134,7 +136,7 @@ private extension NSString {
         var end = max(min(nearRange.location + nearRange.length, length), 0)
         var done = false
         while !done {
-            let range = rangeOfString(substring, options: NSStringCompareOptions.allZeros, range: NSMakeRange(start, end-start))
+            let range = self.rangeOfString(substring as String, options: NSStringCompareOptions(), range: NSMakeRange(start, end-start))
             if range.location != NSNotFound {
                 return range
             }
