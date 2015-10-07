@@ -2,75 +2,78 @@
 //  DropitViewController.swift
 //  Dropit
 //
-//  Created by CS193p Instructor.
-//  Copyright (c) 2015 Stanford University. All rights reserved.
+//  Created by Maxim Veksler on 30/09/2015.
+//  Copyright © 2015 Stanford University. All rights reserved.
 //
 
 import UIKit
 
-class DropitViewController: UIViewController, UIDynamicAnimatorDelegate
-{
-    // MARK: - Outlets
-
+class DropitViewController: UIViewController, UIDynamicAnimatorDelegate {
     @IBOutlet weak var gameView: BezierPathsView!
     
-    // MARK: - Animation
-
+    
     lazy var animator: UIDynamicAnimator = {
-        let lazilyCreatedDynamicAnimator = UIDynamicAnimator(referenceView: self.gameView)
-        lazilyCreatedDynamicAnimator.delegate = self
-        return lazilyCreatedDynamicAnimator
+        let lezilyCreatedDynamicAnimator = UIDynamicAnimator(referenceView: self.gameView)
+        lezilyCreatedDynamicAnimator.delegate = self
+        return lezilyCreatedDynamicAnimator
     }()
     
-    let dropitBehavior = DropitBehavior()
+    let dropitBehaviour = DropitBehavior()
     
     var attachment: UIAttachmentBehavior? {
         willSet {
-            animator.removeBehavior(attachment!)
-            gameView.setPath(nil, named: PathNames.Attachment)
+            if let attachment = attachment {
+                animator.removeBehavior(attachment)
+                gameView.setPath(nil, named: PathNames.Attachment)
+            }
         }
+        
         didSet {
-            if attachment != nil {
-                animator.addBehavior(attachment!)
-                attachment?.action = { [unowned self] in
-                    if let attachedView = self.attachment?.items.first as? UIView {
+            if let attachment = attachment {
+                animator.addBehavior(attachment)
+                attachment.action = { [unowned self] in
+                    if let attachedView = attachment.items.first as? UIView {
                         let path = UIBezierPath()
-                        path.moveToPoint(self.attachment!.anchorPoint)
+                        path.moveToPoint(attachment.anchorPoint)
                         path.addLineToPoint(attachedView.center)
                         self.gameView.setPath(path, named: PathNames.Attachment)
                     }
+
                 }
             }
         }
     }
     
-    // MARK: - View Controller Lifecycle
-    
     override func viewDidLoad() {
         super.viewDidLoad()
-        animator.addBehavior(dropitBehavior)
+        animator.addBehavior(dropitBehaviour)
     }
     
-    // creates a circular barrier in the center of the gameView
-    // the barrier is currently sized to be the same as the size of a drop
+    struct PathNames {
+        static let MiddleBarrier = "Middle Barrier"
+        static let Attachment = "Attachment"
+    }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         let barrierSize = dropSize
         let barrierOrigin = CGPoint(x: gameView.bounds.midX-barrierSize.width/2, y: gameView.bounds.midY-barrierSize.height/2)
         let path = UIBezierPath(ovalInRect: CGRect(origin: barrierOrigin, size: barrierSize))
-        dropitBehavior.addBarrier(path, named: PathNames.MiddleBarrier)
+        dropitBehaviour.addBarrier(path, named: PathNames.MiddleBarrier)
         gameView.setPath(path, named: PathNames.MiddleBarrier)
     }
     
-    // MARK: - UIDynamicAnimatorDelegate
-
     func dynamicAnimatorDidPause(animator: UIDynamicAnimator) {
         removeCompletedRow()
     }
     
-    // MARK: - Gestures
-
+    var dropsPerRow = 10
+    
+    var dropSize: CGSize {
+        let size = gameView.bounds.size.width / CGFloat(dropsPerRow)
+        return CGSize(width: size, height: size)
+    }
+    
     @IBAction func drop(sender: UITapGestureRecognizer) {
         drop()
     }
@@ -92,15 +95,6 @@ class DropitViewController: UIViewController, UIDynamicAnimatorDelegate
         }
     }
     
-    // MARK: - Dropping
-
-    var dropsPerRow = 10
-    
-    var dropSize: CGSize {
-        let size = gameView.bounds.size.width / CGFloat(dropsPerRow)
-        return CGSize(width: size, height: size)
-    }
-    
     var lastDroppedView: UIView?
     
     func drop() {
@@ -109,20 +103,14 @@ class DropitViewController: UIViewController, UIDynamicAnimatorDelegate
         
         let dropView = UIView(frame: frame)
         dropView.backgroundColor = UIColor.random
-        
+
+        dropitBehaviour.addDrop(dropView)
         lastDroppedView = dropView
-    
-        dropitBehavior.addDrop(dropView)
     }
     
-    // removes a single, completed row
-    // allows for a little "wiggle room" for mostly complete rows
-    // in the end, does nothing more than call removeDrop() in DropitBehavior
-
-    func removeCompletedRow()
-    {
+    func removeCompletedRow() {
         var dropsToRemove = [UIView]()
-        var dropFrame = CGRect(x: 0, y: gameView.frame.maxY, width: dropSize.width, height: dropSize.height)
+        var dropFrame = CGRect(x:0, y: gameView.frame.maxY, width: dropSize.width, height: dropSize.height)
         
         repeat {
             dropFrame.origin.y -= dropSize.height
@@ -145,19 +133,10 @@ class DropitViewController: UIViewController, UIDynamicAnimatorDelegate
         } while dropsToRemove.count == 0 && dropFrame.origin.y > 0
         
         for drop in dropsToRemove {
-            dropitBehavior.removeDrop(drop)
+            dropitBehaviour.removeDrop(drop)
         }
     }
-    
-    // MARK: - Constants
-
-    struct PathNames {
-        static let MiddleBarrier = "Middle Barrier"
-        static let Attachment = "Attachment"
-    }
 }
-
-// MARK: - Extensions
 
 private extension CGFloat {
     static func random(max: Int) -> CGFloat {
@@ -167,7 +146,7 @@ private extension CGFloat {
 
 private extension UIColor {
     class var random: UIColor {
-        switch arc4random()%5 {
+        switch arc4random() % 5 {
         case 0: return UIColor.greenColor()
         case 1: return UIColor.blueColor()
         case 2: return UIColor.orangeColor()

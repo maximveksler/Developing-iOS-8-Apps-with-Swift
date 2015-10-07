@@ -2,14 +2,13 @@
 //  DropitBehavior.swift
 //  Dropit
 //
-//  Created by CS193p Instructor.
-//  Copyright (c) 2015 Stanford University. All rights reserved.
+//  Created by Maxim Veksler on 30/09/2015.
+//  Copyright © 2015 Stanford University. All rights reserved.
 //
 
 import UIKit
 
-class DropitBehavior: UIDynamicBehavior
-{
+class DropitBehavior: UIDynamicBehavior {
     let gravity = UIGravityBehavior()
     
     lazy var collider: UICollisionBehavior = {
@@ -17,19 +16,19 @@ class DropitBehavior: UIDynamicBehavior
         lazilyCreatedCollider.translatesReferenceBoundsIntoBoundary = true
         return lazilyCreatedCollider
     }()
-    
-    lazy var dropBehavior: UIDynamicItemBehavior = {
-        let lazilyCreatedDropBehavior = UIDynamicItemBehavior()
-        lazilyCreatedDropBehavior.allowsRotation = true
-        lazilyCreatedDropBehavior.elasticity = 0.75
-        return lazilyCreatedDropBehavior
+
+    lazy var dropBehaviour: UIDynamicItemBehavior = {
+        let lazilyCreatedDropBehaviour = UIDynamicItemBehavior()
+        lazilyCreatedDropBehaviour.allowsRotation = true
+        lazilyCreatedDropBehaviour.elasticity = 0.75
+        return lazilyCreatedDropBehaviour
     }()
     
     override init() {
         super.init()
         addChildBehavior(gravity)
         addChildBehavior(collider)
-        addChildBehavior(dropBehavior)
+        addChildBehavior(dropBehaviour)
     }
     
     func addBarrier(path: UIBezierPath, named name: String) {
@@ -41,13 +40,13 @@ class DropitBehavior: UIDynamicBehavior
         dynamicAnimator?.referenceView?.addSubview(drop)
         gravity.addItem(drop)
         collider.addItem(drop)
-        dropBehavior.addItem(drop)
+        dropBehaviour.addItem(drop)
     }
     
     func removeDrop(drop: UIView) {
         gravity.removeItem(drop)
         collider.removeItem(drop)
-        dropBehavior.removeItem(drop)
+        dropBehaviour.removeItem(drop)
         drop.removeFromSuperview()
     }
 }
